@@ -1,0 +1,213 @@
+{
+  "meta": {
+    "tool": "ReconScanner",
+    "version": "1.0",
+    "generated": "2026-06-13T17:21:23.238353Z"
+  },
+  "target": {
+    "input": "192.168.1.100",
+    "resolved_ip": "192.168.1.100",
+    "hostname": "target.lab.local",
+    "os": "Ubuntu 20.04 Linux (95% confidence)"
+  },
+  "scan": {
+    "time": 1781371276.2719293,
+    "duration_secs": 8.42,
+    "open_ports": 10
+  },
+  "risk": {
+    "score": 100,
+    "label": "CRITICAL",
+    "summary": "Risk Score: 100/100 (CRITICAL) | Open Ports: 10 | Findings: 13 total\n  \u2022 6 CRITICAL\n  \u2022 2 HIGH\n  \u2022 4 LOW\nOS: Ubuntu 20.04 Linux (95% confidence)"
+  },
+  "findings": [
+    {
+      "severity": "CRITICAL",
+      "port": 21,
+      "protocol": "tcp",
+      "service": "ftp",
+      "title": "Script [ftp-anon] flagged vulnerability",
+      "detail": "Anonymous FTP login is ENABLED \u2014 files are publicly readable/writable.\n\nScript output: Anonymous FTP login allowed",
+      "cves": [
+        {
+          "id": "CVE-2011-2523",
+          "cvss": 10.0,
+          "severity": "HIGH",
+          "description": "vsftpd 2.3.4 backdoor \u2014 opens shell on port 6200",
+          "published": "2011-07-07"
+        }
+      ]
+    },
+    {
+      "severity": "CRITICAL",
+      "port": 23,
+      "protocol": "tcp",
+      "service": "telnet",
+      "title": "Telnet service detected",
+      "detail": "Telnet transmits ALL data in plaintext. Replace with SSH immediately.",
+      "cves": []
+    },
+    {
+      "severity": "CRITICAL",
+      "port": 445,
+      "protocol": "tcp",
+      "service": "microsoft-ds",
+      "title": "SMB service detected",
+      "detail": "SMB directly exposed. EternalBlue (MS17-010) target. Patch and firewall.",
+      "cves": [
+        {
+          "id": "CVE-2017-0144",
+          "cvss": 9.8,
+          "severity": "CRITICAL",
+          "description": "EternalBlue SMBv1 RCE \u2014 WannaCry/NotPetya vector",
+          "published": "2017-03-14"
+        }
+      ]
+    },
+    {
+      "severity": "CRITICAL",
+      "port": 445,
+      "protocol": "tcp",
+      "service": "microsoft-ds",
+      "title": "Script [smb-vuln-ms17-010] flagged vulnerability",
+      "detail": "EternalBlue (MS17-010) confirmed VULNERABLE \u2014 patch immediately.\n\nScript output: VULNERABLE\nRisk factor: HIGH\nCVE:CVE-2017-0144",
+      "cves": [
+        {
+          "id": "CVE-2017-0144",
+          "cvss": 9.8,
+          "severity": "CRITICAL",
+          "description": "EternalBlue SMBv1 RCE \u2014 WannaCry/NotPetya vector",
+          "published": "2017-03-14"
+        }
+      ]
+    },
+    {
+      "severity": "CRITICAL",
+      "port": 6379,
+      "protocol": "tcp",
+      "service": "redis",
+      "title": "Redis service detected",
+      "detail": "Redis exposed. Defaults to no authentication. Bind to localhost.",
+      "cves": [
+        {
+          "id": "CVE-2022-0543",
+          "cvss": 10.0,
+          "severity": "CRITICAL",
+          "description": "Redis Lua sandbox escape \u2014 unauthenticated RCE",
+          "published": "2022-02-18"
+        }
+      ]
+    },
+    {
+      "severity": "CRITICAL",
+      "port": 27017,
+      "protocol": "tcp",
+      "service": "mongod",
+      "title": "MongoDB service detected",
+      "detail": "MongoDB exposed. Older versions default to no auth. Critical risk.",
+      "cves": []
+    },
+    {
+      "severity": "HIGH",
+      "port": 21,
+      "protocol": "tcp",
+      "service": "ftp",
+      "title": "FTP service detected",
+      "detail": "FTP transmits credentials in plaintext. Check for anonymous access.",
+      "cves": [
+        {
+          "id": "CVE-2011-2523",
+          "cvss": 10.0,
+          "severity": "HIGH",
+          "description": "vsftpd 2.3.4 backdoor \u2014 opens shell on port 6200",
+          "published": "2011-07-07"
+        }
+      ]
+    },
+    {
+      "severity": "HIGH",
+      "port": 3306,
+      "protocol": "tcp",
+      "service": "mysql",
+      "title": "MySQL service detected",
+      "detail": "MySQL exposed to network. Bind to localhost or restrict with firewall.",
+      "cves": []
+    },
+    {
+      "severity": "LOW",
+      "port": 22,
+      "protocol": "tcp",
+      "service": "ssh",
+      "title": "SSH service detected",
+      "detail": "SSH exposed. Ensure key-based auth only; disable password auth.",
+      "cves": [
+        {
+          "id": "CVE-2016-6210",
+          "cvss": 5.9,
+          "severity": "MEDIUM",
+          "description": "OpenSSH 7.x username enumeration via timing",
+          "published": "2016-08-07"
+        }
+      ]
+    },
+    {
+      "severity": "LOW",
+      "port": 80,
+      "protocol": "tcp",
+      "service": "http",
+      "title": "HTTP service detected",
+      "detail": "HTTP (unencrypted). Check for sensitive data exposure, forced HTTPS redirect.",
+      "cves": [
+        {
+          "id": "CVE-2021-41773",
+          "cvss": 9.8,
+          "severity": "CRITICAL",
+          "description": "Apache 2.4.49 path traversal & RCE (mod_cgi)",
+          "published": "2021-10-05"
+        },
+        {
+          "id": "CVE-2021-42013",
+          "cvss": 9.8,
+          "severity": "CRITICAL",
+          "description": "Apache 2.4.49/2.4.50 path traversal bypass",
+          "published": "2021-10-07"
+        }
+      ]
+    },
+    {
+      "severity": "LOW",
+      "port": 443,
+      "protocol": "tcp",
+      "service": "https",
+      "title": "HTTPS service detected",
+      "detail": "HTTPS. Check TLS version (avoid TLS 1.0/1.1), cert validity.",
+      "cves": []
+    },
+    {
+      "severity": "LOW",
+      "port": 8080,
+      "protocol": "tcp",
+      "service": "http",
+      "title": "HTTP-Alt service detected",
+      "detail": "Alternate HTTP. May expose admin panels or dev servers.",
+      "cves": []
+    },
+    {
+      "severity": "INFO",
+      "port": 22,
+      "protocol": "tcp",
+      "service": "ssh",
+      "title": "Script [ssh-auth-methods] flagged vulnerability",
+      "detail": "SSH authentication methods enumerated.\n\nScript output: publickey,password",
+      "cves": [
+        {
+          "id": "CVE-2016-6210",
+          "cvss": 5.9,
+          "severity": "MEDIUM",
+          "description": "OpenSSH 7.x username enumeration via timing",
+          "published": "2016-08-07"
+        }
+      ]
+    }
+  ]
+}

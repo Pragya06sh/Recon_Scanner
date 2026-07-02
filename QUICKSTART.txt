@@ -1,0 +1,72 @@
+╔══════════════════════════════════════════════════════════════╗
+║           ⚡ RECON SCANNER — QUICK START GUIDE              ║
+╚══════════════════════════════════════════════════════════════╝
+
+STEP 1 — INSTALL EVERYTHING (run once)
+───────────────────────────────────────
+  Linux/Mac:
+    bash setup.sh
+
+  Windows (PowerShell as Admin):
+    pip install -r requirements.txt
+    winget install -e --id Insecure.Nmap
+
+STEP 2 — TEST IT WORKS (no root, no API keys needed)
+──────────────────────────────────────────────────────
+  python3 demo.py
+
+  → Shows live dashboard + generates reports/demo_report.html
+  → Open that HTML file in your browser to see the full report
+
+STEP 3 — ADD API KEYS (optional but recommended)
+──────────────────────────────────────────────────
+  1. Copy .env.example → .env
+  2. Get free Shodan key:  https://account.shodan.io
+  3. Get free NVD key:     https://nvd.nist.gov/developers/request-an-api-key
+  4. Paste keys into .env
+
+STEP 4 — SCAN YOUR OWN LAB VM
+───────────────────────────────
+  Basic scan:
+    sudo python3 main.py 192.168.1.100
+
+  Full scan (all features):
+    sudo python3 main.py 192.168.1.100 --profile full --shodan --html --json --topo
+
+  Quick scan (no CVE lookup, faster):
+    sudo python3 main.py 192.168.1.100 --profile quick --no-cve
+
+  Scan a public test target (nmap's official test server):
+    sudo python3 main.py scanme.nmap.org --profile standard --html
+
+  See all options:
+    python3 main.py --help
+    python3 main.py --list-profiles
+
+⚠  LEGAL REMINDER: Only scan systems you OWN or have WRITTEN
+   PERMISSION to test. Unauthorized scanning is illegal.
+
+══════════════════════════════════════════════════════════════
+FILE STRUCTURE
+══════════════════════════════════════════════════════════════
+
+recon_scanner/
+├── QUICKSTART.txt          ← You are here
+├── README.md               ← Full documentation
+├── setup.sh                ← One-shot installer (Linux/Mac)
+├── requirements.txt        ← Python packages list
+├── .env.example            ← API key template
+├── main.py                 ← Main CLI (real scans)
+├── demo.py                 ← Offline demo (no nmap/root needed)
+├── reports/                ← Scan reports saved here
+└── core/
+    ├── scanner.py          ← Nmap wrapper engine
+    ├── fingerprint.py      ← Deep service fingerprinting
+    ├── topology.py         ← Network topology mapping
+    ├── cve_engine.py       ← NVD + Shodan API clients
+    ├── analyzer.py         ← Risk scoring engine
+    ├── exploit_suggester.py← Metasploit/ATT&CK mapping
+    ├── reporter.py         ← HTML + JSON + terminal output
+    ├── dashboard.py        ← Live terminal dashboard UI
+    └── orchestrator.py     ← Master pipeline controller
+

@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReconScanner Report — 192.168.1.100</title>
+<style>
+  :root {
+    --bg:         #0a0e1a;
+    --bg2:        #0f1628;
+    --bg3:        #151e35;
+    --border:     #1e3a5f;
+    --accent:     #00d4ff;
+    --accent2:    #0099cc;
+    --text:       #c8d8e8;
+    --text-dim:   #5a7a9a;
+    --critical:   #ff3355;
+    --high:       #ff6633;
+    --medium:     #ffaa00;
+    --low:        #44ccff;
+    --info:       #888888;
+    --secure:     #00ff88;
+    --font-mono:  'Courier New', 'Consolas', monospace;
+    --font-ui:    'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Scanlines overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+    );
+  }
+
+  /* ── Layout ── */
+  .wrapper { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+  /* ── Header ── */
+  .header {
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    background: var(--bg2);
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::after {
+    content: '⚡ RECON SCANNER';
+    position: absolute; right: 24px; top: 50%; transform: translateY(-50%);
+    font-size: 56px; opacity: 0.03; font-weight: 900;
+    font-family: var(--font-mono); letter-spacing: -2px;
+    color: var(--accent);
+  }
+  .header h1 {
+    font-family: var(--font-mono);
+    font-size: 22px; font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .header .subtitle { color: var(--text-dim); font-size: 12px; letter-spacing: 1px; }
+
+  /* ── Stats grid ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 16px 20px;
+    position: relative;
+  }
+  .stat-card .label {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 6px;
+  }
+  .stat-card .value {
+    font-family: var(--font-mono);
+    font-size: 28px; font-weight: 700; line-height: 1;
+    color: var(--accent);
+  }
+  .stat-card.risk-critical .value { color: var(--critical); }
+  .stat-card.risk-high     .value { color: var(--high); }
+  .stat-card.risk-medium   .value { color: var(--medium); }
+  .stat-card.risk-low      .value { color: var(--low); }
+  .stat-card.risk-secure   .value { color: var(--secure); }
+
+  /* ── Risk meter ── */
+  .risk-bar-wrap {
+    background: var(--bg3); border: 1px solid var(--border);
+    padding: 16px 20px; margin-bottom: 24px;
+  }
+  .risk-bar-label {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .risk-bar-track {
+    height: 8px; background: var(--bg);
+    border: 1px solid var(--border);
+    position: relative; overflow: hidden;
+  }
+  .risk-bar-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg,
+      var(--secure) 0%, var(--low) 25%, var(--medium) 50%,
+      var(--high) 75%, var(--critical) 100%
+    );
+    background-size: 1200px 100%;
+    background-position: -0% 0;
+    transition: width 1s ease;
+  }
+
+  /* ── Section ── */
+  .section { margin-bottom: 28px; }
+  .section-title {
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent2);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px; height: 14px;
+    background: var(--accent);
+  }
+
+  /* ── Findings ── */
+  .finding {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--border);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+  }
+  .finding.sev-critical { border-left-color: var(--critical); }
+  .finding.sev-high     { border-left-color: var(--high); }
+  .finding.sev-medium   { border-left-color: var(--medium); }
+  .finding.sev-low      { border-left-color: var(--low); }
+
+  .finding-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 6px; flex-wrap: wrap;
+  }
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    padding: 2px 8px;
+    text-transform: uppercase;
+  }
+  .badge-critical { background: var(--critical); color: #000; }
+  .badge-high     { background: var(--high);     color: #000; }
+  .badge-medium   { background: var(--medium);   color: #000; }
+  .badge-low      { background: var(--low);      color: #000; }
+  .badge-info     { background: var(--info);     color: #000; }
+
+  .port-chip {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--accent); background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    padding: 1px 7px;
+  }
+
+  .finding-title {
+    font-weight: 600; font-size: 14px; color: var(--text); flex: 1;
+  }
+  .finding-detail { color: var(--text-dim); font-size: 13px; }
+
+  /* ── CVE Table ── */
+  .cve-table { width: 100%; border-collapse: collapse; }
+  .cve-table th, .cve-table td {
+    padding: 8px 12px; text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .cve-table th {
+    background: var(--bg3); color: var(--text-dim);
+    font-family: var(--font-mono); letter-spacing: 1px;
+    text-transform: uppercase; font-size: 10px;
+  }
+  .cve-table tr:hover td { background: rgba(0,212,255,0.03); }
+  .cve-id {
+    font-family: var(--font-mono); color: var(--accent);
+    font-weight: 700; font-size: 11px;
+  }
+  .cvss-badge {
+    display: inline-block; min-width: 34px; text-align: center;
+    font-family: var(--font-mono); font-weight: 700;
+    font-size: 11px; padding: 1px 6px;
+  }
+  .cvss-critical { background: var(--critical); color: #000; }
+  .cvss-high     { background: var(--high);     color: #000; }
+  .cvss-medium   { background: var(--medium);   color: #000; }
+  .cvss-low      { background: var(--low);      color: #000; }
+
+  /* ── Shodan ── */
+  .info-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .info-cell {
+    background: var(--bg2); padding: 12px 14px;
+  }
+  .info-cell .k { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 3px; }
+  .info-cell .v { font-family: var(--font-mono); font-size: 13px; color: var(--text); }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 40px; padding-top: 16px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim); font-size: 11px; letter-spacing: 1px;
+    font-family: var(--font-mono);
+    display: flex; justify-content: space-between;
+  }
+
+  /* ── Meta row ── */
+  .meta-row {
+    display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px;
+    font-family: var(--font-mono); font-size: 12px;
+  }
+  .meta-item { color: var(--text-dim); }
+  .meta-item span { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="subtitle">NETWORK RECONNAISSANCE &amp; VULNERABILITY REPORT</div>
+    <h1>⚡ 192.168.1.100</h1>
+    <div class="meta-row">
+      <div class="meta-item">IP: <span>192.168.1.100</span></div>
+      <div class="meta-item">HOSTNAME: <span>target.lab.local</span></div>
+      <div class="meta-item">SCANNED: <span>2026-06-13 22:51:16</span></div>
+      <div class="meta-item">DURATION: <span>8.4s</span></div>
+      <div class="meta-item">OS: <span>Ubuntu 20.04 Linux (95% confidence)</span></div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card risk-critical">
+      <div class="label">Risk Score</div>
+      <div class="value">100</div>
+      <div style="font-size:10px;color:var(--text-dim);margin-top:4px;letter-spacing:1px">/100 — CRITICAL</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Open Ports</div>
+      <div class="value">10</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Findings</div>
+      <div class="value">13</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">CVEs</div>
+      <div class="value">9</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Critical</div>
+      <div class="value" style="color:var(--critical)">6</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">High</div>
+      <div class="value" style="color:var(--high)">2</div>
+    </div>
+  </div>
+
+  <!-- Risk Meter -->
+  <div class="risk-bar-wrap">
+    <div class="risk-bar-label">
+      <span>RISK METER</span>
+      <span style="color:var(--text);font-weight:700">100/100 — CRITICAL</span>
+    </div>
+    <div class="risk-bar-track">
+      <div class="risk-bar-fill"></div>
+    </div>
+  </div>
+
+  <!-- Findings -->
+  <div class="section">
+    <div class="section-title">Security Findings (13)</div>
+    <div class="finding sev-critical">
+  <div class="finding-header">
+    <span class="badge badge-critical">CRITICAL</span>
+    <span class="port-chip">21/tcp</span>
+    <span class="badge" style="background:var(--bg3);color:var(--text-dim)">ftp</span>
+    <span class="finding-title">Script [ftp-anon] flagged vulnerability</span>
+  </div>
+  <div class="finding-detail">Anonymous FTP login is ENABLED — files are publicly readable/writable.
+
+Script output: Anonymous FTP login allowed</div>
+  <div style="margin-top:6px"><span style="font-family:var(--font-mono);font-size:10px;color:var(--accent);margin-right:6px">CVE-2011-2523 (CVSS:10.0)</span></div>
+</div>
+<div class="finding sev-critical">
+  <div class="finding-header">
+    <span class="badge badge-critical">CRITICAL</span>
+    <span class="port-chip">23/tcp</span>
+    <span class="badge" style="background:var(--bg3);color:var(--text-dim)">telnet</span>
+    <span class="finding-title">Telnet service detected</span>
+  </div>
+  <div class="finding-detail">Telnet transmits ALL data in plaintext. Replace with SSH immediately.</div>
+  
+</div>
+<div class="finding sev-critical">
+  <div class="finding-header">
+    <span class="badge badge-critical">CRITICAL</span>
+    <span class="port-chip">445/tcp</span>
+    <span class="badge" style="background:var(--bg3);color:var(--text-dim)">microsoft-ds</span>
+    <span class="finding-title">SMB service detected</span>
+  </div>
+  <div class="finding-detail">SMB directly exposed. EternalBlue (MS17-010) target. Patch and firewall.</div>
+  <div style="margin-top:6px"><span style="font-family:var(--font-mono);font-size:10px;color:var(--accent);margin-right:6px">CVE-2017-0144 (CVSS:9.8)</span></div>
+</div>
+<div class="finding sev-critical">
+  <div class="finding-header">
+    <span class="badge badge-critical">CRITICAL</span>
+    <span class="port-chip">445/tcp</span>
+    <span class="badge" style="background:var(--bg3);color:var(--text-dim)">microsoft-ds</span>
+    <span class="finding-title">Script [smb-vuln-ms17-010] flagged vulnerability</span>
+  </div>
+  <div class="finding-detail">EternalBlue (MS17-010) confirmed VULNERABLE — patch immediately.
+
+Script output: VULNERABLE
+Risk factor: HIGH
+CVE:CVE-2017-0144</div>
+  <div style="margin-top:6px"><span style="font-family:var(--font-mono);font-size:10px;color:var(--accent);margin-right:6px">CVE-2017-0144 (CVSS:9.8)</span></div>
+</div>
+<div class="finding sev-critical">
+  <div class="finding-header">
+    <span class="badge badge-critical">CRITICAL</span>
+    <span class="port-chip">6379/tcp</span>
+    <span class="badge" style="background:var(--bg3);color:var(--text-dim)">redis</span>
+    <span class="finding-title">Redis service detected</span>
+  </div>
+  <div class="finding-detail">Redis exposed. Defaults to no authentication. Bind to localhost.</div>
+  <div style="margin-top:6px"><span style="font-family:var(--font-mono);font-size:10px;color:var(--accent);margin-right:6px">CVE-2022-0543 (CVSS:10.0)</span></div>
+</div>
+<div class="finding sev-critical">
+  <div class="finding-header">
+    <span class="badge badge-critical">CRITICAL</span>
+    <span class="port-chip">27017/tcp</span>
+    <span class="badge" style="background:var(--bg3);color:var(--text-dim)">mongod</span>
+    <span class="finding-title">MongoDB service detected</span>
+  </div>
+  <div class="finding-detail">MongoDB exposed. Older versions default to no auth. Critical risk.</div>
+  
+</div>
+<div class="finding sev-high">
+  <div class="finding-header">
+    <span class="badge badge-high">HIGH</span>
+    <span class="port-chip">21/tcp</span>
+    <span class="badge" style="background:var(--bg3);color:var(--text-dim)">ftp</span>
+    <span class="finding-title">FTP service detected</span>
+  </div>
+  <div class="finding-detail">FTP transmits credentials in plaintext. Check for anonymous access.</div>
+  <div style="margin-top:6px"><span style="font-family:var(--font-mono);font-size:10px;color:var(--accent);margin-right:6px">CVE-2011-2523 (CVSS:10.0)</span></div>
+</div>
+<div class="finding sev-high">
+  <div class="finding-header">
+    <span class="badge badge-high">HIGH</span>
+    <span class="port-chip">3306/tcp</span>
+    <span class="badge" style="background:var(--bg3);color:var(--text-dim)">mysql</span>
+    <span class="finding-title">MySQL service detected</span>
+  </div>
+  <div class="finding-detail">MySQL exposed to network. Bind to localhost or restrict with firewall.</div>
+  
+</div>
+<div class="finding sev-low">
+  <div class="finding-header">
+    <span class="badge badge-low">LOW</span>
+    <span class="port-chip">22/tcp</span>
+    <span class="badge" style="background:var(--bg3);color:var(--text-dim)">ssh</span>
+    <span class="finding-title">SSH service detected</span>
+  </div>
+  <div class="finding-detail">SSH exposed. Ensure key-based auth only; disable password auth.</div>
+  <div style="margin-top:6px"><span style="font-family:var(--font-mono);font-size:10px;color:var(--accent);margin-right:6px">CVE-2016-6210 (CVSS:5.9)</span></div>
+</div>
+<div class="finding sev-low">
+  <div class="finding-header">
+    <span class="badge badge-low">LOW</span>
+    <span class="port-chip">80/tcp</span>
+    <span class="badge" style="background:var(--bg3);color:var(--text-dim)">http</span>
+    <span class="finding-title">HTTP service detected</span>
+  </div>
+  <div class="finding-detail">HTTP (unencrypted). Check for sensitive data exposure, forced HTTPS redirect.</div>
+  <div style="margin-top:6px"><span style="font-family:var(--font-mono);font-size:10px;color:var(--accent);margin-right:6px">CVE-2021-41773 (CVSS:9.8)</span> <span style="font-family:var(--font-mono);font-size:10px;color:var(--accent);margin-right:6px">CVE-2021-42013 (CVSS:9.8)</span></div>
+</div>
+<div class="finding sev-low">
+  <div class="finding-header">
+    <span class="badge badge-low">LOW</span>
+    <span class="port-chip">443/tcp</span>
+    <span class="badge" style="background:var(--bg3);color:var(--text-dim)">https</span>
+    <span class="finding-title">HTTPS service detected</span>
+  </div>
+  <div class="finding-detail">HTTPS. Check TLS version (avoid TLS 1.0/1.1), cert validity.</div>
+  
+</div>
+<div class="finding sev-low">
+  <div class="finding-header">
+    <span class="badge badge-low">LOW</span>
+    <span class="port-chip">8080/tcp</span>
+    <span class="badge" style="background:var(--bg3);color:var(--text-dim)">http</span>
+    <span class="finding-title">HTTP-Alt service detected</span>
+  </div>
+  <div class="finding-detail">Alternate HTTP. May expose admin panels or dev servers.</div>
+  
+</div>
+<div class="finding sev-info">
+  <div class="finding-header">
+    <span class="badge badge-info">INFO</span>
+    <span class="port-chip">22/tcp</span>
+    <span class="badge" style="background:var(--bg3);color:var(--text-dim)">ssh</span>
+    <span class="finding-title">Script [ssh-auth-methods] flagged vulnerability</span>
+  </div>
+  <div class="finding-detail">SSH authentication methods enumerated.
+
+Script output: publickey,password</div>
+  <div style="margin-top:6px"><span style="font-family:var(--font-mono);font-size:10px;color:var(--accent);margin-right:6px">CVE-2016-6210 (CVSS:5.9)</span></div>
+</div>
+  </div>
+
+  <!-- CVE Table -->
+  <div class="section">
+  <div class="section-title">CVE Reference Table (9)</div>
+  <table class="cve-table">
+    <thead><tr><th>CVE ID</th><th>CVSS</th><th>Severity</th><th>Port/Service</th><th>Description</th></tr></thead>
+    <tbody><tr>
+  <td><span class="cve-id">CVE-2011-2523</span></td>
+  <td><span class="cvss-badge cvss-critical">10.0</span></td>
+  <td><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">HIGH</span></td>
+  <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">21/ftp</td>
+  <td style="color:var(--text-dim);font-size:12px">vsftpd 2.3.4 backdoor — opens shell on port 6200...</td>
+</tr><tr>
+  <td><span class="cve-id">CVE-2017-0144</span></td>
+  <td><span class="cvss-badge cvss-critical">9.8</span></td>
+  <td><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">CRITICAL</span></td>
+  <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">445/microsoft-ds</td>
+  <td style="color:var(--text-dim);font-size:12px">EternalBlue SMBv1 RCE — WannaCry/NotPetya vector...</td>
+</tr><tr>
+  <td><span class="cve-id">CVE-2017-0144</span></td>
+  <td><span class="cvss-badge cvss-critical">9.8</span></td>
+  <td><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">CRITICAL</span></td>
+  <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">445/microsoft-ds</td>
+  <td style="color:var(--text-dim);font-size:12px">EternalBlue SMBv1 RCE — WannaCry/NotPetya vector...</td>
+</tr><tr>
+  <td><span class="cve-id">CVE-2022-0543</span></td>
+  <td><span class="cvss-badge cvss-critical">10.0</span></td>
+  <td><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">CRITICAL</span></td>
+  <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">6379/redis</td>
+  <td style="color:var(--text-dim);font-size:12px">Redis Lua sandbox escape — unauthenticated RCE...</td>
+</tr><tr>
+  <td><span class="cve-id">CVE-2011-2523</span></td>
+  <td><span class="cvss-badge cvss-critical">10.0</span></td>
+  <td><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">HIGH</span></td>
+  <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">21/ftp</td>
+  <td style="color:var(--text-dim);font-size:12px">vsftpd 2.3.4 backdoor — opens shell on port 6200...</td>
+</tr><tr>
+  <td><span class="cve-id">CVE-2016-6210</span></td>
+  <td><span class="cvss-badge cvss-medium">5.9</span></td>
+  <td><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">MEDIUM</span></td>
+  <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">22/ssh</td>
+  <td style="color:var(--text-dim);font-size:12px">OpenSSH 7.x username enumeration via timing...</td>
+</tr><tr>
+  <td><span class="cve-id">CVE-2021-41773</span></td>
+  <td><span class="cvss-badge cvss-critical">9.8</span></td>
+  <td><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">CRITICAL</span></td>
+  <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">80/http</td>
+  <td style="color:var(--text-dim);font-size:12px">Apache 2.4.49 path traversal & RCE (mod_cgi)...</td>
+</tr><tr>
+  <td><span class="cve-id">CVE-2021-42013</span></td>
+  <td><span class="cvss-badge cvss-critical">9.8</span></td>
+  <td><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">CRITICAL</span></td>
+  <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">80/http</td>
+  <td style="color:var(--text-dim);font-size:12px">Apache 2.4.49/2.4.50 path traversal bypass...</td>
+</tr><tr>
+  <td><span class="cve-id">CVE-2016-6210</span></td>
+  <td><span class="cvss-badge cvss-medium">5.9</span></td>
+  <td><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">MEDIUM</span></td>
+  <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">22/ssh</td>
+  <td style="color:var(--text-dim);font-size:12px">OpenSSH 7.x username enumeration via timing...</td>
+</tr></tbody>
+  </table>
+</div>
+
+  <!-- Shodan -->
+  <div class="section">
+  <div class="section-title">Shodan Intelligence</div>
+  <div style="color:var(--text-dim);font-style:italic">Not configured</div>
+</div>
+
+  <div class="footer">
+    <span>RECON SCANNER — Ethical Use Only</span>
+    <span>Generated: 2026-06-13 22:51:16</span>
+  </div>
+
+</div>
+</body>
+</html>
